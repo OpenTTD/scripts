@@ -23,6 +23,8 @@ import sys
 BEARER_TOKEN = "ghp_???"
 # NOTE: Replace this with your own GitHub username
 USERNAME = "TrueBrain"
+# NOTE: Replace with the version branch to backport to
+RELEASE = "13"
 
 pr_query = """
 query ($number: Int!) {
@@ -50,6 +52,11 @@ query ($search: String!) {
           mergeCommit {
             oid
           }
+          labels(first: 10) {
+            nodes {
+              name
+            }
+          }
         }
       }
     }
@@ -65,11 +72,11 @@ def do_query(query, variables):
         [
             "curl",
             "-H",
-            "Authorization: bearer " + BEARER_TOKEN,
+            f"Authorization: bearer {BEARER_TOKEN}",
             "-X",
             "POST",
             "-d",
-            '{"query": "' + query + '", "variables": "' + variables + '"}',
+            f'{{"query": "{query}", "variables": "{variables}"}}',
             "https://api.github.com/graphql",
         ],
         capture_output=True,
@@ -84,7 +91,7 @@ def do_remove_label(number):
         [
             "curl",
             "-H",
-            "Authorization: bearer " + BEARER_TOKEN,
+            f"Authorization: bearer {BEARER_TOKEN}",
             "-X",
             "DELETE",
             f"https://api.github.com/repos/OpenTTD/OpenTTD/issues/{number}/labels/backport%20requested",
@@ -98,7 +105,7 @@ def do_add_label(number):
         [
             "curl",
             "-H",
-            "Authorization: bearer " + BEARER_TOKEN,
+            f"Authorization: bearer {BEARER_TOKEN}",
             "-X",
             "POST",
             "-d",
@@ -157,7 +164,7 @@ def main():
 
     if not resume:
         do_command(["git", "fetch", "upstream"])
-        do_command(["git", "checkout", "upstream/release/12", "-B", "release-backport"])
+        do_command(["git", "checkout", f"upstream/release/{RELEASE}", "-B", "release-backport"])
 
     for pr in sorted(all_prs["data"]["search"]["edges"], key=lambda x: x["node"]["mergedAt"]):
         if resume:
@@ -167,6 +174,10 @@ def main():
             print(f"Merging #{pr['node']['number']}: {pr['node']['title']} (resuming)")
         else:
             print(f"Merging #{pr['node']['number']}: {pr['node']['title']}")
+
+        if any(True for node in pr["node"]["labels"]["nodes"] if node["name"] == "backport squash"):
+            print(" -> was squashed")
+            pr["node"]["commits"]["totalCount"] = 1
 
         for i in range(pr["node"]["commits"]["totalCount"]):
             if resume_i is not None:
@@ -210,7 +221,7 @@ def main():
     marker = []
 
     print("## Description")
-    print("Backport of all closed Pull Requests labeled as 'backport requested' into `release/12`.")
+    print(f"Backport of all closed Pull Requests labeled as 'backport requested' into `release/{RELEASE}`.")
     for pr in sorted(all_prs["data"]["search"]["edges"], key=lambda x: x["node"]["mergedAt"]):
         print(f"- https://github.com/OpenTTD/OpenTTD/pull/{pr['node']['number']}")
         marker.append(str(pr["node"]["number"]))
@@ -232,9 +243,8 @@ def main():
             print("You can create the PR here:")
 
     print(
-        "  https://github.com/OpenTTD/OpenTTD/compare/release/12..."
-        + USERNAME
-        + ":release-backport?expand=1&title=Backport%20master%20into%20release%2f12"
+        f"https://github.com/OpenTTD/OpenTTD/compare/release/{RELEASE}...{USERNAME}"
+        f":release-backport?expand=1&title=Backport%20master%20into%20release%2f{RELEASE}"
     )
 
 
