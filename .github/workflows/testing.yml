@@ -1,0 +1,70 @@
+name: Testing
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  codeql:
+    name: Security and Quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: python
+        queries: security-and-quality
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  flake8:
+    name: Flake8
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Flake8
+      uses: TrueBrain/actions-flake8@v2
+      with:
+        path: backport
+
+  black:
+    name: Black
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Black
+      run: |
+        python -m pip install --upgrade pip
+        pip install black
+        black -l 120 --check backport
+
+  check_annotations:
+    name: Check Annotations
+    needs:
+    - flake8
+    - black
+    # not codeql, as that reports its own status
+
+    if: always() && github.event_name == 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check annotations
+      uses: OpenTTD/actions/annotation-check@v3
