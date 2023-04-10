@@ -19,7 +19,8 @@ import os
 import subprocess
 import sys
 
-# NOTE: Replace this with your own toekn
+# NOTE: Replace this with your own token, which must be a classic token that
+# has public_repo scope enabled to be able to mark the backported PRs as done.
 BEARER_TOKEN = "ghp_???"
 # NOTE: Replace this with your own GitHub username
 USERNAME = "TrueBrain"
@@ -71,6 +72,7 @@ def do_query(query, variables):
     res = subprocess.run(
         [
             "curl",
+            "--fail",
             "-H",
             f"Authorization: bearer {BEARER_TOKEN}",
             "-X",
@@ -90,6 +92,7 @@ def do_remove_label(number):
     return subprocess.run(
         [
             "curl",
+            "--fail",
             "-H",
             f"Authorization: bearer {BEARER_TOKEN}",
             "-X",
@@ -104,6 +107,7 @@ def do_add_label(number):
     return subprocess.run(
         [
             "curl",
+            "--fail",
             "-H",
             f"Authorization: bearer {BEARER_TOKEN}",
             "-X",
