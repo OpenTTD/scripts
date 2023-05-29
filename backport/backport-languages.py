@@ -7,9 +7,14 @@ import argparse
 import glob
 import subprocess
 import shlex
+import sys
 
 
 def backport_language(language_file, blacklisted_ids, diff_to_stdout=False):
+    if sys.platform == "win32":
+        # shlex.split doesn't handle backslash properly
+        language_file = language_file.replace("\\", "/")
+
     result = subprocess.run(
         shlex.split("git diff HEAD..upstream/master -- %s" % language_file), check=True, stdout=subprocess.PIPE
     )
