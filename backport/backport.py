@@ -5,8 +5,13 @@ It should be next to backport-languages.py.
 This assumes your git "origin" points to your fork, and "upstream" to upstream.
 This will force-push to a branch called "release-backport".
 
+The GITHUB_TOKEN is a classic token you need to generate that has public_repo
+scope enabled. This token is used to push the backported PRs to GitHub.
+
 Execute with:
 
+$ export GITHUB_TOKEN=ghp_XXX
+$ export GITHUB_USERNAME=XXX
 $ python3 .github/backport.py
 
 And follow the instructions. After the PR is merged, run:
@@ -19,11 +24,8 @@ import os
 import subprocess
 import sys
 
-# NOTE: Replace this with your own token, which must be a classic token that
-# has public_repo scope enabled to be able to mark the backported PRs as done.
-BEARER_TOKEN = "ghp_???"
-# NOTE: Replace this with your own GitHub username
-USERNAME = "TrueBrain"
+BEARER_TOKEN = os.getenv("GITHUB_TOKEN")
+USERNAME = os.getenv("GITHUB_USERNAME")
 # NOTE: Replace with the version branch to backport to
 RELEASE = "13"
 
@@ -225,7 +227,7 @@ def main():
     print("")
     print("Done cherry-picking")
     print("Backporting language changes")
-    res = do_command(["python3", ".github/backport-languages.py"])
+    res = do_command(["python3", os.path.dirname(os.path.realpath(__file__)) + "/backport-languages.py"])
     if res.returncode != 0:
         print("ERROR: backporting language changes failed")
         return
