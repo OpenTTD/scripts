@@ -48,6 +48,11 @@ query ($search: String!) {
           title
           commits(first: 100) {
             totalCount
+            nodes {
+              commit {
+                messageHeadline
+              }
+            }
           }
           mergedAt
           mergeCommit {
@@ -179,9 +184,19 @@ def main():
         else:
             print(f"Merging #{pr['node']['number']}: {pr['node']['title']}")
 
-        if any(True for node in pr["node"]["labels"]["nodes"] if node["name"] == "backport squash"):
-            print(" -> was squashed")
-            pr["node"]["commits"]["totalCount"] = 1
+        # In case of multiple commits, check if it was squashed or rebased.
+        # We do this by comparing commit titles. As if you rebased, they have
+        # to be identical.
+        if pr["node"]["commits"]["totalCount"] > 1:
+            for i in range(pr["node"]["commits"]["totalCount"]):
+                commit = pr["node"]["commits"]["totalCount"] - i - 1
+                commit_str = f'{pr["node"]["mergeCommit"]["oid"]}' + "".join(["^"] * commit)
+
+                res = do_command(["git", "log", "--pretty=format:%s", f"{commit_str}^..{commit_str}"])
+                if res.stdout.decode() != pr["node"]["commits"]["nodes"][i]["commit"]["messageHeadline"]:
+                    print("  -> was squashed")
+                    pr["node"]["commits"]["totalCount"] = 1
+                    break
 
         for i in range(pr["node"]["commits"]["totalCount"]):
             if resume_i is not None:
