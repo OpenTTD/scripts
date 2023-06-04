@@ -227,7 +227,9 @@ def main():
     print("")
     print("Done cherry-picking")
     print("Backporting language changes")
-    res = do_command(["python3", os.path.dirname(os.path.realpath(__file__)) + "/backport-languages.py"])
+    res = do_command(
+        [sys.executable or "python3", os.path.dirname(os.path.realpath(__file__)) + "/backport-languages.py"]
+    )
     if res.returncode != 0:
         print("ERROR: backporting language changes failed")
         return
