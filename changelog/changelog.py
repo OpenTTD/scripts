@@ -10,7 +10,7 @@ scope enabled. This token is used to fetch information from the GitHub API.
 Execute with:
 
 $ export GITHUB_TOKEN=ghp_XXX
-$ python3 .github/backport.py <last-commit-of-previous-release>
+$ python3 .github/changelog.py <last-commit-of-previous-release>
 """
 
 import json
