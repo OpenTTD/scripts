@@ -173,6 +173,11 @@ def main():
         print("ERROR: couldn't fetch all Pull Requests marked for 'backport requested'")
         return
 
+    for pr in all_prs["data"]["search"]["edges"]:
+        if pr["node"]["mergedAt"] is None:
+            print(f"ERROR: #{pr['node']['number']} is marked for 'backport requested' while not merged")
+            return
+
     if not resume:
         do_command(["git", "fetch", "upstream"])
         do_command(["git", "checkout", f"upstream/release/{RELEASE}", "-B", "release-backport"])
