@@ -204,7 +204,11 @@ def main():
         if message.endswith(f"(#{pr})"):
             message = message[: -len(f"(#{pr})")]
 
-        commit_type, commit_message = message.strip().split(":", 1)
+        if ":" in message:
+            commit_type, commit_message = message.strip().split(":", 1)
+        else:
+            commit_type = "Change"
+            commit_message = message
         subject = None
 
         # Remove trailing dots.
